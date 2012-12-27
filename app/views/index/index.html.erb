@@ -1,0 +1,143 @@
+# coding:utf-8
+
+<!-- ログインしていなかった場合認証ボタン -->
+<% unless @oauth %>
+  <body class="index">
+    <%= form_tag :oauth, method: :get do %>
+      <%= submit_tag '認証する' %>
+    <% end %>
+  </body>
+<!-- ログインしていた場合 -->
+<% else %>
+  <!-- ログアウトボタンと更新ボタン -->
+  <table align="right" style="text-align: right;">
+    <tr>
+      <td><%= form_tag :logout, method: :get do |f| %>
+            <%= submit_tag 'ログアウト' %>
+          <% end %>
+      </td>
+      <td><span class="ui-icon ui-icon-cancel"></span>
+      </td>
+    <tr>
+      <td><%= form_tag :index, method: :get do |f| %>
+            <%= submit_tag '更新' %>
+          <% end %>
+      </td>
+      <td><span class="ui-icon ui-icon-refresh"></span>
+      </td>
+    </tr>
+  </table>
+
+  <!-- ツイートを打ち込むテキストエリアと「つぶやく」ボタン -->
+  <%= form_tag :tweet, method: :get do |f| %>
+    <%= text_area_tag :tweet, "", :size => "148" %>
+    <%= submit_tag 'つぶやく' %>
+  <% end %>
+  <br>
+
+  <!-- jQueryのタブ -->
+  <div style='clear:both;' id="tabdemo1">
+
+    <!-- タブ名 -->
+    <ul id="tab">
+      <li><a href="#tab-friends_timeline">ALL</a></li>
+      <li><a href="#tab-mentions">＠</a></li>
+      <li><a href="#tab-favorite">★</a></li>
+      <li><a href="#tab-retweet">RT</a></li>
+    </ul>
+    
+    <!-- タブの中身 -->
+    <!-- ①友人のタイムライン -->
+    <div id="tab-friends_timeline">
+        <% @tweets.each do |t| %>
+          <table class="timeline">
+            <tr>
+              <td rowspan="2" width="50px"><%= image_tag t.user.profile_image_url, size: '40x40' %></td>
+              <td><span class="name"><%= t.user.name %></span></td>
+              <td align="right"><%= raw "<a href='#' onClick=reply('#{t.user.screen_name}')>Reply</a>" %>
+                                　<font color="yellow"><%= link_to "★", "/favorite/#{t.id}" %></font>
+                                　　<%= link_to "RT", "/retweet/#{t.id}", method: :post %></td>
+            </tr>
+            <tr>
+              <td colspan="2"><span class="sc_name"><%= t.user.screen_name %></span></td>
+            </tr>
+            <tr>
+              <td colspan="3"><%= t.text %></td>
+            </tr>
+            <tr>
+              <td colspan="3" align="right"><span class="time"><%= japan_date(t.created_at) %></span></td>
+            </tr>
+          </table>
+        <% end %>
+    </div>
+    <!-- ②自分への返信 -->
+    <div id="tab-mentions">
+        <% @mentions.each do |m| %>
+         <table class="timeline">
+            <tr>
+              <td rowspan="2" width="50px"><%= image_tag m.user.profile_image_url, size: '40x40' %></td>
+              <td><span class="name"><%= m.user.name %></span></td>
+              <td align="right"><%= raw "<a href='#' onClick=reply('#{m.user.screen_name}')>Reply</a>" %>
+                                　<font color="yellow"><%= link_to "★", "/favorite/#{m.id}" %></font>
+                                　　<%= link_to "RT", "/retweet/#{m.id}", method: :post %></td>
+            </tr>
+            <tr>
+              <td colspan="2"><span class="sc_name"><%= m.user.screen_name %></span></td>
+            </tr>
+            <tr>
+              <td colspan="3"><%= m.text %></td>
+            </tr>
+            <tr>
+              <td colspan="3" align="right"><span class="time"><%= japan_date(m.created_at) %></span></td>
+            </tr>
+         </table>
+        <% end %>
+    </div>
+    <!-- ③お気に入り -->
+    <div id="tab-favorite">
+        <% @favorites.each do |f| %>
+          <table class="timeline">
+            <tr>
+              <td rowspan="2" width="50px"><%= image_tag f.user.profile_image_url, size: '40x40' %></td>
+              <td><span class="name"><%= f.user.name %></span></td>
+              <td align="right"><%= raw "<a href='#' onClick=reply('#{f.user.screen_name}')>Reply</a>" %>
+                                　<font color="yellow"><%= link_to "★", "/favorite/#{f.id}" %></font>
+                                　<%= link_to "RT", "/retweet/#{f.id}", method: :post %></td>
+            </tr>
+            <tr>
+              <td colspan="2"><span class="sc_name"><%= f.user.screen_name %></span></td>
+            </tr>
+            <tr>
+              <td colspan="3"><%= f.text %></td>
+            </tr>
+            <tr>
+              <td colspan="3" align="right"><span class="time"><%= japan_date(f.created_at) %></span></td>
+            </tr>
+          </table>
+        <% end %>
+    </div>
+    <!-- ④リツイート -->
+    <div id="tab-retweet">
+        <% @retweets.each do |r| %>
+          <table class="timeline">
+            <tr>
+              <td rowspan="2" width="50px"><%= image_tag r.retweeted_status.user.profile_image_url, size: '40x40' %></td>
+              <td><span class="name"><%= r.retweeted_status.user.name %></span></td>
+              <td align="right"><%= raw "<a href='#' onClick=reply('#{r.retweeted_status.user.screen_name}')>Reply</a>" %>
+                                　<font color="yellow"><%= link_to "★", "/favorite/#{r.retweeted_status.id}" %></font>
+                                　<%= link_to "RT", "/retweet/#{r.retweeted_status.id}", method: :post %></td>
+            </tr>
+            <tr>
+              <td colspan="2"><span class="sc_name"><%= r.retweeted_status.user.screen_name %></span></td>
+            </tr>
+            <tr>
+              <td colspan="3"><%= r.retweeted_status.text %></td>
+            </tr>
+            <tr>
+              <td colspan="3" align="right"><span class="time"><%= japan_date(r.retweeted_status.created_at) %></span></td>
+            </tr>
+          </table>
+        <% end %>
+    </div>
+  </div>
+<% end %>
